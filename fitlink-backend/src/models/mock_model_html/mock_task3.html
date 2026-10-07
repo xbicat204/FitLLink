@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mock mới — Tạo Package + Gen lịch theo PTProfile</title>
+  <style>
+    :root{
+      --bg:#0b0f14;--panel:#111a24;--text:#e6edf4;--muted:#9db0c3;--border:#223246;--accent:#66d1ff;--ok:#39d98a;--warn:#ffcc66;--bad:#ff7a7a;
+      --card:#0f1520;--chip:#172232;--shadow:0 12px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0a0f15,#0e141c 30%,#0a0f15);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .page{display:grid;grid-template-columns:400px 1fr;gap:16px;padding:16px}
+    @media(max-width:1024px){.page{grid-template-columns:1fr}}
+
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:14px}
+    h1{margin:0 0 8px;font-size:20px}
+    h2{margin:14px 0 8px;font-size:15px;color:var(--muted)}
+    label{display:block;font-size:12px;color:var(--muted);margin:6px 0}
+    input[type="text"],input[type="number"],input[type="time"],input[type="date"],select,textarea{
+      width:100%;background:#0f1520;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;outline:none
+    }
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(102,209,255,.15)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .btn{background:linear-gradient(180deg,#1a2636,#152030);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-weight:600;cursor:pointer}
+    .btn:hover{box-shadow:0 8px 24px rgba(102,209,255,.15);transform:translateY(-1px)}
+    .btn.acc{background:linear-gradient(180deg,#1e3d55,#193247);border-color:#2b4c67}
+    .btn.warn{background:linear-gradient(180deg,#4a351c,#3a2a16);border-color:#5a4020}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{background:var(--chip);border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px;display:inline-flex;gap:8px;align-items:center}
+
+    /* Google Calendar-like */
+    .cal-wrap{margin-top:8px}
+    .cal-head{display:flex;gap:8px;align-items:flex-end;justify-content:space-between}
+    .cal-toolbar{display:flex;gap:8px}
+    .cal{display:grid;grid-template-columns:72px 1fr;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#0f1520}
+    .cal-hours{background:#0c111a;border-right:1px solid var(--border);position:relative}
+    .cal-hours .tick{position:absolute;left:0;right:0;height:1px;background:#1e2a3a}
+    .cal-hours .label{position:absolute;right:6px;transform:translateY(-50%);font-size:11px;color:var(--muted)}
+    .cal-days{display:grid;grid-template-columns:repeat(7,1fr);position:relative}
+    .cal-day{position:relative;min-height:960px;border-right:1px solid var(--border)}
+    .cal-day:last-child{border-right:none}
+    .cal-day .day-name{position:sticky;top:0;background:#0f1520;padding:6px 8px;font-size:12px;color:var(--muted);border-bottom:1px solid #1e2a3a;z-index:2}
+    .cal-guideline{position:absolute;left:0;right:0;height:1px;background:#1a2534}
+    .cal-interval{position:absolute;left:4px;right:4px;background:rgba(102,209,255,.06);border:1px dashed #2a4a68;border-radius:8px;z-index:0}
+    .event{position:absolute;left:6px;right:6px;border-radius:10px;border:1px solid #2a3c52;box-shadow:var(--shadow);padding:6px 8px;font-size:12px;display:flex;flex-direction:column;gap:4px;z-index:1}
+    .event.pattern-0{background:linear-gradient(180deg,#214a64,#1a3349);border-color:#2b5e7f}
+    .event.pattern-1{background:linear-gradient(180deg,#355a2a,#293f20);border-color:#416f35}
+    .event.pattern-2{background:linear-gradient(180deg,#5a2a3e,#3f202f);border-color:#7f2b4f}
+    .event .time{font-weight:700}
+    .event .meta{font-size:11px;color:var(--muted)}
+    .sep{height:1px;background:#1e2a3a;margin:12px 0}
+    .note{font-size:12px;color:var(--muted)}
+    .json{height:120px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- SIDEBAR: CREATE PACKAGE + PT PROFILE INPUTS -->
+    <aside class="card">
+      <h1>Tạo Package & Gen lịch</h1>
+
+      <h2>Thông tin gói</h2>
+      <label>Tên gói</label>
+      <input id="pkgName" type="text" placeholder="VD: Gói tháng cơ bản" value="Gói tháng cơ bản" />
+
+      <div class="row">
+        <div>
+          <label>Tổng số buổi (totalSessions)</label>
+          <input id="totalSessions" type="number" min="1" max="500" value="12" />
+        </div>
+        <div>
+          <label>Thời lượng 1 buổi (phút)</label>
+          <input id="sessionDuration" type="number" min="15" max="300" step="5" value="60" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Thời hạn gói (durationDays)</label>
+          <input id="durationDays" type="number" min="1" max="3650" value="30" />
+        </div>
+        <div>
+          <label>Ngày bắt đầu</label>
+          <input id="startDate" type="date" />
+        </div>
+      </div>
+
+      <h2>Pattern ngày (recurrence.patterns)</h2>
+      <div id="patternsBox"></div>
+      <p class="note">Thêm/xoá pattern ở dưới. Mỗi pattern có check ngày và input tổng số buổi riêng.</p>Có thể chọn nhiều pattern (ví dụ <strong>[2,4,6]</strong> và <strong>[3,5,7]</strong>). Mỗi pattern sẽ có màu riêng trong lịch.</p>
+
+      <h2>Giờ cố định của package (preview)</h2>
+      <div class="row">
+        <div>
+          <label>Chọn giờ bắt đầu cố định</label>
+          <select id="fixedStart"></select>
+        </div>
+        <div>
+          <label>Thời lượng 1 buổi (phút)</label>
+          <input id="sessionDuration" type="number" min="15" max="300" step="5" value="60" />
+        </div>
+      </div>
+
+      <h2>Giờ làm PT (PTProfile.workingHours)</h2>
+      <p class="note">Ví dụ 06:00–11:00 và 13:00–17:00 từ T2→T7, CN nghỉ.</p>
+      <div id="whEditor"></div>
+
+      <div class="row">
+        <div>
+          <label>Nghỉ giữa 2 buổi (defaultBreakMin)</label>
+          <input id="breakMin" type="number" min="0" step="5" value="30" />
+        </div>
+        <div>
+          <label>Giới hạn số tuần để lấp đủ buổi</label>
+          <input id="maxWeeks" type="number" min="1" max="52" value="8" />
+        </div>
+      </div>
+
+      <div class="sep"></div>
+      <h2>JSON (nâng cao)</h2>
+      <textarea id="jsonBox" class="json" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="applyJson">Áp dụng JSON</button>
+        <button class="btn warn" id="resetBtn">Reset default</button>
+      </div>
+
+      <div class="sep"></div>
+      <div class="row">
+        <button class="btn acc" id="genBtn">Sinh slot & hiển thị</button>
+        <button class="btn" id="exportBtn">Xuất JSON slot</button>
+      </div>
+      <p class="note">Slot kết thúc vượt quá <em>end</em> của interval sẽ bị loại (vd 10:30→11:30 khi end=11:00).</p>
+    </aside>
+
+    <!-- MAIN: PREVIEW & CALENDAR -->
+    <main class="card">
+      <h1>Preview lịch gói</h1>
+      <div class="chips" id="meta"></div>
+
+      <div class="sep"></div>
+
+      <section>
+        <h2>Danh sách theo ngày</h2>
+        <div id="listByDay"></div>
+      </section>
+
+      <div class="sep"></div>
+
+      <section class="cal-wrap">
+        <div class="cal-head">
+          <h2>Lịch dạng Google Calendar (tuần)</h2>
+          <div class="cal-toolbar">
+            <button class="btn" id="prevWeek">⟵ Tuần trước</button>
+            <button class="btn" id="thisWeek">Tuần này</button>
+            <button class="btn" id="nextWeek">Tuần sau ⟶</button>
+          </div>
+        </div>
+        <p class="note">Vùng xanh nhạt (nét đứt) = working hours; Ô xanh đậm = slot đã cắt từ gói.</p>
+        <div class="cal">
+          <div id="calHours" class="cal-hours"></div>
+          <div id="calDays" class="cal-days"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+// ===== Utils =====
+const pad=n=>n.toString().padStart(2,'0');
+const toMin=t=>{const[a,b]=t.split(':').map(Number);return a*60+b};
+const toHHMM=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;
+const DOW=[null,'T2','T3','T4','T5','T6','T7','CN'];
+const isoToday=()=>{const d=new Date();const o=d.getTimezoneOffset();return new Date(d.getTime()-o*60000).toISOString().slice(0,10)};
+const mondayOf=d=>{const dt=new Date(d);const day=(dt.getDay()||7);dt.setDate(dt.getDate()-day+1);dt.setHours(0,0,0,0);return dt};
+
+// ===== State =====
+const defaultState={
+  pkg:{
+    name:'Gói tháng cơ bản',
+    sessionDurationMin:60,
+    durationDays:30,
+    recurrence:{patterns:[
+      {days:[2,4,6],totalSessions:9},
+      {days:[3,5,7],totalSessions:9}
+    ]},
+    startDate:isoToday()
+  },
+  pt:{
+    defaultBreakMin:30,
+    workingHours:[
+      {dayOfWeek:1,intervals:[{start:'06:00',end:'11:00'},{start:'13:00',end:'17:00'}]},
+      {dayOfWeek:2,intervals:[{start:'06:00',end:'11:00'},{start:'13:00',end:'17:00'}]},
+      {dayOfWeek:3,intervals:[{start:'06:00',end:'11:00'},{start:'13:00',end:'17:00'}]},
+      {dayOfWeek:4,intervals:[{start:'06:00',end:'11:00'},{start:'13:00',end:'17:00'}]},
+      {dayOfWeek:5,intervals:[{start:'06:00',end:'11:00'},{start:'13:00',end:'17:00'}]},
+      {dayOfWeek:6,intervals:[{start:'06:00',end:'11:00'},{start:'13:00',end:'17:00'}]},
+      {dayOfWeek:7,intervals:[]}
+    ]
+  },
+  ui:{maxWeeks:8}
+};
+let state=JSON.parse(JSON.stringify(defaultState));
+let weekStart=mondayOf(new Date());
+
+// ===== Build PT working hours editor =====
+function buildWHEditor(){
+  const root=document.getElementById('whEditor');
+  root.innerHTML='';
+  for(let i=1;i<=7;i++){
+    const wrap=document.createElement('div');
+    wrap.className='card';
+    wrap.style.background='var(--card)';
+    wrap.style.border='1px solid var(--border)';
+    wrap.style.marginBottom='8px';
+    const head=document.createElement('div');
+    head.style.display='flex';
+    head.style.justifyContent='space-between';
+    head.innerHTML=`<strong>${DOW[i]}</strong><span class="note">dayOfWeek=${i}</span>`;
+    wrap.appendChild(head);
+    const list=document.createElement('div');
+    list.className='row';
+    const intervals=state.pt.workingHours.find(d=>d.dayOfWeek===i)?.intervals||[];
+    intervals.forEach((iv,idx)=>{
+      const box=document.createElement('div');
+      box.innerHTML=`
+        <label>Bắt đầu</label><input type="time" data-dow="${i}" data-idx="${idx}" data-k="start" value="${iv.start}">
+        <label>Kết thúc</label><input type="time" data-dow="${i}" data-idx="${idx}" data-k="end" value="${iv.end}">
+      `;
+      list.appendChild(box);
+    });
+    const actions=document.createElement('div');
+    actions.style.display='flex';actions.style.gap='8px';actions.style.marginTop='8px';
+    const add=document.createElement('button');add.className='btn';add.textContent='+ Thêm interval';
+    add.onclick=()=>{
+      const day=state.pt.workingHours.find(d=>d.dayOfWeek===i)|| (state.pt.workingHours.push({dayOfWeek:i,intervals:[]}),state.pt.workingHours.find(d=>d.dayOfWeek===i));
+      day.intervals.push({start:'06:00',end:'11:00'});
+      buildWHEditor();updateJSON();
+    };
+    const clr=document.createElement('button');clr.className='btn';clr.textContent='Xoá tất cả';
+    clr.onclick=()=>{const day=state.pt.workingHours.find(d=>d.dayOfWeek===i);if(day) day.intervals=[];buildWHEditor();updateJSON();};
+    actions.appendChild(add);actions.appendChild(clr);
+    wrap.appendChild(list);wrap.appendChild(actions);root.appendChild(wrap);
+  }
+  root.addEventListener('change',e=>{
+    if(e.target.matches('input[type=time]')){
+      const dow=Number(e.target.dataset.dow),idx=Number(e.target.dataset.idx),k=e.target.dataset.k;
+      const day=state.pt.workingHours.find(d=>d.dayOfWeek===dow)||(state.pt.workingHours.push({dayOfWeek:dow,intervals:[]}),state.pt.workingHours.find(d=>d.dayOfWeek===dow));
+      if(!day.intervals[idx]) day.intervals[idx]={start:'06:00',end:'11:00'};
+      day.intervals[idx][k]=e.target.value;updateJSON();
+    }
+  });
+}
+
+// ===== Build Patterns editor =====
+function renderPatterns(){
+  const box=document.getElementById('patternsBox');
+  box.innerHTML='';
+  state.pkg.recurrence.patterns.forEach((pat,idx)=>{
+    const arr=pat.days;
+    const wrap=document.createElement('div');
+    wrap.className='card';wrap.style.background='var(--card)';wrap.style.border='1px solid var(--border)';wrap.style.marginBottom='8px';
+    const colorChip=`<span class="chip" style="border-color:transparent">Màu: <span class="chip" style="background:${idx===0?'#214a64':idx===1?'#355a2a':'#5a2a3e'}">&nbsp;&nbsp;&nbsp;</span></span>`;
+    wrap.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+      <strong>Pattern #${idx+1}</strong>
+      <div class="chips">${colorChip}
+        <label class="chip">Tổng buổi: <input type="number" min="1" max="500" data-ptn="${idx}" data-k="total" value="${pat.totalSessions}" style="width:90px"></label>
+        <button class="btn warn" data-remove="${idx}">Xoá</button>
+      </div>
+    </div>
+    <div class="chips" style="margin-top:8px">
+      ${[1,2,3,4,5,6,7].map(d=>`<label class='chip'><input type='checkbox' data-idx='${idx}' data-d='${d}' ${arr.includes(d)?'checked':''}/> ${DOW[d]}</label>`).join('')}
+    </div>`;
+    box.appendChild(wrap);
+  });
+  box.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change',e=>{
+      const idx=Number(e.target.dataset.idx),d=Number(e.target.dataset.d);
+      const a=state.pkg.recurrence.patterns[idx].days;
+      if(e.target.checked){if(!a.includes(d)) a.push(d);} else {state.pkg.recurrence.patterns[idx].days=a.filter(x=>x!==d);} 
+      a.sort((x,y)=>x-y);updateJSON();renderPatterns();
+    });
+  });
+  box.querySelectorAll('input[data-k=total]').forEach(inp=>{
+    inp.addEventListener('change',e=>{
+      const idx=Number(e.target.dataset.ptn);
+      state.pkg.recurrence.patterns[idx].totalSessions=Math.max(1,Number(e.target.value||1));
+      updateJSON();
+    });
+  });
+  box.querySelectorAll('button[data-remove]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const idx=Number(e.target.getAttribute('data-remove'));
+      state.pkg.recurrence.patterns.splice(idx,1);
+      if(state.pkg.recurrence.patterns.length===0) state.pkg.recurrence.patterns.push({days:[2,4,6],totalSessions:9});
+      updateJSON();renderPatterns();
+    });
+  });
+}
+function addPattern(arr){
+  state.pkg.recurrence.patterns.push({days:[...arr],totalSessions:9});
+  updateJSON();renderPatterns();
+}
+
+// ===== Calendar UI =====
+function buildHourScale(startMin=300,endMin=1320){
+  const box=document.getElementById('calHours');
+  box.innerHTML='';
+  const h=endMin-startMin;box.style.height=h+'px';box.style.position='relative';
+  for(let m=startMin;m<=endMin;m+=60){
+    const y=m-startMin;const t=document.createElement('div');t.className='tick';t.style.top=y+'px';box.appendChild(t);
+    const lab=document.createElement('div');lab.className='label';lab.style.top=y+'px';lab.textContent=toHHMM(m);box.appendChild(lab);
+  }
+}
+function renderCalendar(slots,startMin=300,endMin=1320){
+  buildHourScale(startMin,endMin);
+  const daysBox=document.getElementById('calDays');
+  daysBox.innerHTML='';
+  const ms=86400000;const days=[...Array(7)].map((_,i)=>new Date(weekStart.getTime()+i*ms));
+  days.forEach(dt=>{
+    const col=document.createElement('div');col.className='cal-day';col.style.height=(endMin-startMin)+'px';
+    const dowApp=(dt.getDay()===0?7:dt.getDay());
+    const head=document.createElement('div');head.className='day-name';head.innerHTML=`${DOW[dowApp]} <span class="note">${dt.toISOString().slice(0,10)}</span>`;col.appendChild(head);
+    for(let m=startMin;m<=endMin;m+=60){const gl=document.createElement('div');gl.className='cal-guideline';gl.style.top=(m-startMin)+'px';col.appendChild(gl);} 
+    const intervals=state.pt.workingHours.find(d=>d.dayOfWeek===dowApp)?.intervals||[];
+    intervals.forEach(iv=>{const s=Math.max(toMin(iv.start),startMin),e=Math.min(toMin(iv.end),endMin);if(e<=s)return;const box=document.createElement('div');box.className='cal-interval';box.style.top=(s-startMin)+'px';box.style.height=(e-s)+'px';col.appendChild(box);});
+    daysBox.appendChild(col);
+  });
+  const map=new Map();
+  slots.forEach(s=>{(map.get(s.date)||map.set(s.date,[]).get(s.date)).push(s);});
+  days.forEach((dt,i)=>{
+    const dateStr=dt.toISOString().slice(0,10);const col=daysBox.children[i];
+    const items=(map.get(dateStr)||[]).map(s=>({startMin:toMin(s.start),endMin:toMin(s.end),label:`${s.start}–${s.end} [${s.pattern.join('-')}]`,patternIdx:s.patternIdx})).sort((a,b)=>a.startMin-b.startMin||a.endMin-b.endMin);
+    const lanes=[];items.forEach(ev=>{let placed=false;for(const lane of lanes){if(lane[lane.length-1].endMin<=ev.startMin){lane.push(ev);placed=true;break;}}if(!placed)lanes.push([ev]);});
+    const gap=6,total=lanes.length||1;
+    lanes.forEach((lane,idxLane)=>{
+      lane.forEach(ev=>{
+        const el=document.createElement('div');el.className='event pattern-'+(ev.patternIdx%3);
+        const top=Math.max(ev.startMin,startMin)-startMin;const height=Math.min(ev.endMin,endMin)-Math.max(ev.startMin,startMin);
+        const leftPct=(idxLane/total)*100;const widthPct=(1/total)*100 - (gap/col.clientWidth)*100;
+        el.style.top=top+'px';el.style.height=height+'px';el.style.left=`calc(${leftPct}% + 3px)`;el.style.width=`calc(${widthPct}% - 6px)`;
+        el.innerHTML=`<div class="time">${ev.label}</div><div class="meta">${state.pkg.sessionDurationMin}′</div>`;
+        col.appendChild(el);
+      });
+    });
+  });
+}
+
+// ===== Slot generation =====
+function generateSlots(){
+  const {pkg,pt,ui}=state;
+  const startDate=new Date(pkg.startDate+'T00:00:00');
+  const latestByDurationDays=new Date(startDate.getTime()+(pkg.durationDays-1)*86400000);
+  const latestByWeeks=new Date(startDate.getTime()+(ui.maxWeeks*7-1)*86400000);
+  const maxEnd=latestByDurationDays<latestByWeeks?latestByDurationDays:latestByWeeks;
+  const whMap=new Map(pt.workingHours.map(d=>[d.dayOfWeek,d.intervals]));
+  const duration=pkg.sessionDurationMin;const step=duration+pt.defaultBreakMin;
+  const patterns=(pkg.recurrence.patterns||[]).map(p=>({days:[...p.days].sort((a,b)=>a-b),total:p.totalSessions})).filter(p=>p.days.length>0);
+  // lanes per DOW
+  const lanesByDow=new Map();
+  for(let dow=1;dow<=7;dow++){
+    const starts=new Set();
+    (whMap.get(dow)||[]).forEach(iv=>{
+      let cur=toMin(iv.start),end=toMin(iv.end);
+      while(cur+duration<=end){starts.add(cur);cur+=step;if(cur>=end)break;}
+    });
+    lanesByDow.set(dow,Array.from(starts).sort((a,b)=>a-b));
+  }
+  const slots=[];const msDay=86400000;
+  for(let pIdx=0;pIdx<patterns.length;pIdx++){
+    const p=patterns[pIdx];
+    // intersection of lanes across days
+    let common=null;
+    p.days.forEach(d=>{
+      const arr=lanesByDow.get(d)||[];
+      common=common===null?new Set(arr):new Set([...common].filter(x=>arr.includes(x)));
+    });
+    const laneStarts=Array.from(common||[]).sort((a,b)=>a-b);
+    for(const laneStartMin of laneStarts){
+      let count=0;
+      for(let weekStartTs=mondayOf(startDate).getTime();weekStartTs<=maxEnd.getTime();weekStartTs+=7*msDay){
+        for(const dow of p.days){
+          const base=new Date(weekStartTs);const baseDow=base.getDay()||7;const offset=((dow-baseDow+7)%7);
+          const dayDate=new Date(weekStartTs+offset*msDay);
+          if(dayDate.getTime()<startDate.getTime()||dayDate.getTime()>maxEnd.getTime()) continue;
+          const intervals=whMap.get(dow)||[];
+          const ok=intervals.some(iv=>laneStartMin>=toMin(iv.start)&&laneStartMin+duration<=toMin(iv.end));
+          if(!ok) continue;
+          const dateStr=new Date(dayDate.getTime()-(new Date().getTimezoneOffset()*60000)).toISOString().slice(0,10);
+          slots.push({date:dateStr,dayOfWeek:dow,start:toHHMM(laneStartMin),end:toHHMM(laneStartMin+duration),pattern:p.days,patternIdx:pIdx});
+          count++; if(count>=p.total) break;
+        }
+        if(count>=p.total) break;
+      }
+    }
+  }
+  return slots;
+}
+
+// ===== List & Meta =====
+function renderList(slots){
+  const box=document.getElementById('listByDay');
+  box.innerHTML='';
+  const g=slots.reduce((acc,s)=>{(acc[s.date]||(acc[s.date]=[])).push(s);return acc;},{});
+  Object.keys(g).sort().forEach(date=>{
+    const card=document.createElement('div');card.className='card';card.style.background='var(--card)';card.style.border='1px solid var(--border)';
+    const head=document.createElement('div');head.style.display='flex';head.style.justifyContent='space-between';
+    const dow=new Date(date+'T00:00:00').getDay();const dowApp=dow===0?7:dow;
+    head.innerHTML=`<strong>${date} (${DOW[dowApp]})</strong><span class="note">${g[date].length} slot</span>`;
+    card.appendChild(head);
+    g[date].forEach(s=>{const el=document.createElement('div');el.className='chip';el.style.marginTop='8px';el.innerHTML=`${s.start} → ${s.end} <span class='note' style='margin-left:6px'>[${s.pattern.join('-')}]</span>`;card.appendChild(el);});
+    box.appendChild(card);
+  });
+}
+function renderMeta(slots){
+  const m=document.getElementById('meta');m.innerHTML='';
+  const add=html=>{const el=document.createElement('div');el.className='chip';el.innerHTML=html;m.appendChild(el);};
+  add(`Gói: <strong>${state.pkg.name}</strong>`);
+  add(`Slot sinh ra: <strong>${slots.length}</strong>`);
+  add(`Duration: <strong>${state.pkg.sessionDurationMin}′</strong>`);
+  add(`Patterns: <strong>${(state.pkg.recurrence.patterns||[]).map(p=>`[${p.days.join(',')}] (${p.totalSessions} buổi)`).join(' + ')}</strong>`);
+  add(`Start: <strong>${state.pkg.startDate}</strong>`);
+}
+
+// ===== JSON sync =====
+function updateJSON(){
+  const data={pkg:state.pkg,pt:state.pt,ui:state.ui};
+  document.getElementById('jsonBox').value=JSON.stringify(data,null,2);
+  document.getElementById('pkgName').value=state.pkg.name;
+  document.getElementById('sessionDuration').value=state.pkg.sessionDurationMin;
+  document.getElementById('durationDays').value=state.pkg.durationDays;
+  document.getElementById('startDate').value=state.pkg.startDate;
+  document.getElementById('breakMin').value=state.pt.defaultBreakMin;
+  document.getElementById('maxWeeks').value=state.ui.maxWeeks;
+  renderPatterns();
+  buildWHEditor();
+}
+function applyJSON(){
+  try{const js=JSON.parse(document.getElementById('jsonBox').value);state=js;updateJSON();}
+  catch(e){alert('JSON không hợp lệ');}
+}
+
+// ===== Wire =====
+// Inputs
+document.getElementById('pkgName').addEventListener('input',e=>{state.pkg.name=e.target.value;updateJSON();});
+
+document.getElementById('sessionDuration').addEventListener('change',e=>{state.pkg.sessionDurationMin=Number(e.target.value);updateJSON();});
+
+document.getElementById('durationDays').addEventListener('change',e=>{state.pkg.durationDays=Number(e.target.value);updateJSON();});
+
+document.getElementById('startDate').addEventListener('change',e=>{state.pkg.startDate=e.target.value;updateJSON();});
+
+document.getElementById('breakMin').addEventListener('change',e=>{state.pt.defaultBreakMin=Number(e.target.value);updateJSON();});
+
+document.getElementById('maxWeeks').addEventListener('change',e=>{state.ui.maxWeeks=Number(e.target.value);updateJSON();});
+
+// Pattern buttons (added earlier in DOM)
+const btn246=document.getElementById('add246'); if(btn246) btn246.addEventListener('click',()=>addPattern([2,4,6]));
+const btn357=document.getElementById('add357'); if(btn357) btn357.addEventListener('click',()=>addPattern([3,5,7]));
+
+document.getElementById('applyJson').addEventListener('click',applyJSON);
+
+document.getElementById('resetBtn').addEventListener('click',()=>{state=JSON.parse(JSON.stringify(defaultState));updateJSON();});
+
+document.getElementById('genBtn').addEventListener('click',()=>{
+  const slots=generateSlots();
+  renderMeta(slots);renderList(slots);
+  weekStart=mondayOf(new Date(state.pkg.startDate+'T00:00:00'));
+  renderCalendar(slots);
+});
+
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  const slots=generateSlots();
+  const blob=new Blob([JSON.stringify(slots,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='slots.json';a.click();URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('prevWeek').addEventListener('click',()=>{weekStart=new Date(weekStart.getTime()-7*86400000);renderCalendar(generateSlots());});
+document.getElementById('thisWeek').addEventListener('click',()=>{weekStart=mondayOf(new Date());renderCalendar(generateSlots());});
+document.getElementById('nextWeek').addEventListener('click',()=>{weekStart=new Date(weekStart.getTime()+7*86400000);renderCalendar(generateSlots());});
+
+// Boot
+state.pkg.startDate=isoToday();
+updateJSON();
+</script>
+</body>
+</html>

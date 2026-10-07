@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin • Duyệt hồ sơ PT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b0f13;
+      --card: #121820;
+      --muted: #8892a0;
+      --text: #e7eef7;
+      --ok: #18c964;
+      --warn: #f5a524;
+      --danger: #f31260;
+      --line: #1c2632;
+      --chip: #1a2330;
+      --btn: #1e293b;
+      --btn2: #0ea5e9;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;line-height:1.5}
+    a{color:#7dd3fc;text-decoration:none}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .grid{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:12px;align-items:center}
+    .space{height:12px}
+    .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px}
+    .chip.ok{background:rgba(24,201,100,.12);border-color:rgba(24,201,100,.4);color:#7cf2b5}
+    .chip.warn{background:rgba(245,165,36,.12);border-color:rgba(245,165,36,.4);color:#ffd9a0}
+    .chip.danger{background:rgba(243,18,96,.12);border-color:rgba(243,18,96,.4);color:#ffb3c7}
+    .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .kpi .item{background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:12px}
+    .kpi .val{font-size:20px;font-weight:700}
+    .hdr{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0b0f13 70%,rgba(11,15,19,0));padding:12px 0 8px;border-bottom:1px solid var(--line)}
+    .avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+    .cols{display:grid;grid-template-columns:2fr 1.2fr;gap:16px}
+    .list{display:grid;gap:8px}
+    .label{font-size:12px;color:var(--muted)}
+    .value{font-weight:600}
+    .media{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .cover{width:100%;height:180px;border-radius:12px;object-fit:cover;border:1px solid var(--line)}
+    .video{width:100%;height:180px;border-radius:12px;border:1px solid var(--line);background:#000;display:flex;align-items:center;justify-content:center;font-size:12px;color:#9ca3af}
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .table th{color:var(--muted);font-weight:500;font-size:12px;text-align:left;padding:0 12px}
+    .table td{background:var(--chip);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 12px}
+    .table tr td:first-child{border-left:1px solid var(--line);border-radius:10px 0 0 10px}
+    .table tr td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+    .map{height:220px;border-radius:12px;border:1px solid var(--line);background:
+      radial-gradient(300px 300px at 40% 60%, rgba(14,165,233,.15), transparent),
+      radial-gradient(120px 120px at 70% 30%, rgba(24,201,100,.12), transparent),
+      #0a0f14;display:flex;align-items:center;justify-content:center;color:#9ca3af}
+    .timeline{border-left:2px solid var(--line);margin-left:8px;padding-left:12px}
+    .tl-item{margin:10px 0;position:relative}
+    .tl-item::before{content:"";position:absolute;left:-11px;top:4px;width:10px;height:10px;border-radius:50%;background:#38bdf8;border:2px solid var(--bg)}
+    .actions{position:sticky;bottom:0;display:flex;gap:10px;background:linear-gradient(0deg,#0b0f13 70%,rgba(11,15,19,0));padding:12px 0}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--btn);color:var(--text);border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn.primary{background:var(--btn2);border-color:#0284c7}
+    .btn.danger{background:rgba(243,18,96,.12);border-color:rgba(243,18,96,.6)}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .stack{display:grid;gap:10px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0c1117;border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;font-size:12px;color:#a9b1bb}
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+    .modal.open{display:flex}
+    .modal .panel{width:min(520px,92vw);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+    textarea{width:100%;min-height:100px;border-radius:10px;border:1px solid var(--line);background:#0c1218;color:var(--text);padding:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- Header -->
+    <div class="hdr">
+      <div class="row">
+        <img class="avatar" src="https://i.pravatar.cc/100?img=12" alt="PT Avatar" />
+        <div style="flex:1">
+          <div style="font-weight:700">Nguyễn Văn PT</div>
+          <div class="muted" style="font-size:13px">pt@example.com • 0901 234 567</div>
+        </div>
+        <span class="chip warn">PENDING</span>
+        <span class="chip">Nộp lúc 10:25 22/10/2025</span>
+        <span class="chip">submitCount: 2</span>
+      </div>
+    </div>
+
+    <div class="space"></div>
+
+    <!-- Summary KPIs -->
+    <div class="kpi">
+      <div class="item">
+        <div class="label">Xác minh hiện tại</div>
+        <div class="val">Chưa duyệt</div>
+      </div>
+      <div class="item">
+        <div class="label">Đánh giá</div>
+        <div class="val">4.8 ⭐</div>
+        <div class="muted">35 lượt</div>
+      </div>
+      <div class="item">
+        <div class="label">Sẵn sàng nhận học viên</div>
+        <div class="val">Tắt</div>
+      </div>
+    </div>
+
+    <div class="space"></div>
+
+    <div class="cols">
+      <!-- LEFT -->
+      <div class="grid">
+        <!-- Identity -->
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">Thông tin PT</h3>
+            <a href="#" class="chip">Xem PTProfile sống</a>
+          </div>
+          <div class="grid-2">
+            <div class="list">
+              <div><span class="label">User ID</span><div class="value">66ffab...usr</div></div>
+              <div><span class="label">Trạng thái tài khoản</span><div class="value">Đang hoạt động</div></div>
+              <div><span class="label">Vai trò</span><div class="value">PT</div></div>
+            </div>
+            <div class="list">
+              <div><span class="label">Tổng gói đang bán</span><div class="value">3</div></div>
+              <div><span class="label">Tổng học viên đang theo</span><div class="value">12</div></div>
+              <div><span class="label">Đã tạo từ</span><div class="value">2024-08-14</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Snapshot -->
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Ảnh chụp hồ sơ (Snapshot)</h3>
+          <div class="grid">
+            <div class="stack">
+              <div class="label">Giới thiệu</div>
+              <div>PT 7 năm kinh nghiệm, thế mạnh giảm mỡ, tăng sức bền.</div>
+            </div>
+            <div class="grid-2">
+              <div>
+                <div class="label">Specialties</div>
+                <div class="row"><span class="chip">giảm mỡ</span><span class="chip">sức bền</span></div>
+              </div>
+              <div>
+                <div class="label">Kinh nghiệm</div>
+                <div class="value">7 năm</div>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="stack">
+                <div class="label">Primary Gym</div>
+                <div class="value">Iron Gym Q1</div>
+                <div class="muted">12 Lê Lợi, Q.1, HCMC</div>
+              </div>
+              <div class="stack">
+                <div class="label">Kênh dạy (Delivery Modes)</div>
+                <div class="row">
+                  <span class="chip ok">atPtGym</span>
+                  <span class="chip ok">atClient</span>
+                  <span class="chip">atOtherGym</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="stack">
+                <div class="label">Chính sách di chuyển</div>
+                <div class="row">
+                  <span class="chip ok">enabled</span>
+                  <span class="chip">freeRadiusKm: 5</span>
+                  <span class="chip">maxTravelKm: 20</span>
+                  <span class="chip">feePerKm: 10,000đ</span>
+                </div>
+              </div>
+              <div class="stack">
+                <div class="label">Ghi chú khu vực (areaNote)</div>
+                <div>Ưu tiên Q1, Q3, Q4</div>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="map">[ Map preview: pin (106.70098, 10.77689), Free radius 5km, Max 20km ]</div>
+              <div class="media">
+                <img class="cover" src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1200&auto=format&fit=crop" alt="Cover"/>
+                <div class="video">Video intro (preview)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificates -->
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Chứng chỉ</h3>
+          <table class="table">
+            <thead>
+              <tr><th>Tên</th><th>Nơi cấp</th><th>Năm</th><th>Liên kết</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ACE CPT</td><td>ACE</td><td>2020</td><td><a href="#">Xem</a></td>
+              </tr>
+              <tr>
+                <td>NASM CES</td><td>NASM</td><td>2022</td><td><a href="#">Xem</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Alerts / Checklist -->
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Checklist duyệt</h3>
+          <div class="list">
+            <div class="row"><span class="chip ok">OK</span><div>primaryGym.location hợp lệ</div></div>
+            <div class="row"><span class="chip ok">OK</span><div>Delivery modes phù hợp travel policy</div></div>
+            <div class="row"><span class="chip warn">NOTE</span><div>Video intro chưa xác thực nguồn</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="grid">
+        <!-- Decision -->
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Quyết định</h3>
+          <div class="list">
+            <div>
+              <div class="label">Trạng thái</div>
+              <div class="row">
+                <span class="chip warn">PENDING</span>
+                <span class="chip">reviewer: (chưa có)</span>
+              </div>
+            </div>
+            <div class="space"></div>
+            <div class="actions">
+              <button class="btn" onclick="onApprove()">Approve</button>
+              <button class="btn danger" onclick="openReject()">Reject</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Lịch sử</h3>
+          <div class="timeline">
+            <div class="tl-item">
+              <div><strong>submit</strong> bởi <em>Nguyễn Văn PT</em></div>
+              <div class="muted">2025-10-22 10:25</div>
+            </div>
+            <div class="tl-item">
+              <div><strong>reject</strong> bởi <em>Admin B</em></div>
+              <div class="muted">2025-10-15 09:12 — Lý do: Thiếu tọa độ gym</div>
+            </div>
+            <div class="tl-item">
+              <div><strong>submit</strong> bởi <em>Nguyễn Văn PT</em></div>
+              <div class="muted">2025-10-15 08:55</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Raw payload (dev-only) -->
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Payload (dev)</h3>
+          <pre class="code" id="payload"></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="space"></div>
+
+  </div>
+
+  <!-- Reject modal -->
+  <div class="modal" id="rejectModal" aria-hidden="true">
+    <div class="panel">
+      <h3 style="margin:0 0 8px 0">Nhập lý do từ chối</h3>
+      <p class="muted" style="margin-top:0">Lý do này sẽ gửi cho PT để chỉnh sửa và nộp lại.</p>
+      <textarea id="rejectReason" placeholder="VD: Thiếu toạ độ gym; Bio quá ngắn; Chưa có chứng chỉ hợp lệ..."></textarea>
+      <div class="space"></div>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn" onclick="closeReject()">Hủy</button>
+        <button class="btn danger" onclick="onReject()">Xác nhận từ chối</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mock payload để hiển thị khu "dev"
+    const payload = {
+      _id: "6733f2...req",
+      status: "pending",
+      submitCount: 2,
+      user: { _id: "66ffab...usr", name: "Nguyễn Văn PT", email: "pt@example.com", phone: "0901234567", avatar: "https://i.pravatar.cc/100?img=12", isActive: true },
+      ptProfile: { _id: "66ffac...pro", verified: false, ratingAvg: 4.8, ratingCount: 35, availableForNewClients: false },
+      submittedProfile: {
+        primaryGym: { name: "Iron Gym Q1", address: "12 Lê Lợi, Q.1, HCMC", location: { type: "Point", coordinates: [106.70098, 10.77689] } },
+        deliveryModes: { atPtGym: true, atClient: true, atOtherGym: false },
+        travelPolicy: { enabled: true, freeRadiusKm: 5, maxTravelKm: 20, feePerKm: 10000 },
+        coverImage: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+        bio: "PT 7 năm kinh nghiệm, thế mạnh giảm mỡ.",
+        specialties: ["giảm mỡ","sức bền"],
+        yearsExperience: 7,
+        certificates: [{ name:"ACE CPT", issuer:"ACE", year:2020, url:"#"}],
+        areaNote: "Ưu tiên Q1, Q3, Q4",
+        videoIntroUrl: "https://video.cdn/abc.mp4"
+      },
+      logs: [
+        { action:"submit", by:"66ffab...usr", at:"2025-10-22T03:01:12Z", note:"" },
+        { action:"reject", by:"66e1...adm", at:"2025-10-15T02:12:45Z", note:"Thiếu toạ độ gym" },
+        { action:"submit", by:"66ffab...usr", at:"2025-10-22T02:59:00Z", note:"" }
+      ]
+    };
+    document.getElementById('payload').textContent = JSON.stringify(payload, null, 2);
+
+    // Mock actions
+    function onApprove(){
+      alert('Approved! (Demo) • Thực tế: gọi PATCH /pt-approval-requests/:id/approve');
+    }
+    function openReject(){
+      document.getElementById('rejectModal').classList.add('open');
+    }
+    function closeReject(){
+      document.getElementById('rejectModal').classList.remove('open');
+    }
+    function onReject(){
+      const reason = document.getElementById('rejectReason').value.trim();
+      if(!reason){ alert('Vui lòng nhập lý do.'); return; }
+      alert('Rejected with reason: ' + reason + '\n(Demo) • Thực tế: PATCH /.../reject { rejectReason }');
+      closeReject();
+    }
+  </script>
+</body>
+</html>

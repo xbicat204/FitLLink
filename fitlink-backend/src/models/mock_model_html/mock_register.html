@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Đăng ký • Student / PT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0b0f13;--card:#121820;--text:#e7eef7;--muted:#8ea0b3;--line:#1b2633;
+      --chip:#1a2330;--accent:#0ea5e9;--danger:#f31260;--ok:#18c964
+    }
+    *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:980px;margin:0 auto;padding:20px}
+    h1,h2,h3{margin:0 0 10px 0}
+    .tabs{display:flex;gap:10px;margin-bottom:14px}
+    .tab{padding:10px 14px;border:1px solid var(--line);background:var(--chip);border-radius:12px;cursor:pointer}
+    .tab.active{background:var(--accent);border-color:#0284c7}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+    .grid{display:grid;gap:12px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{font-size:13px;color:var(--muted)}
+    input,select,textarea{
+      width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);
+      background:#0c1218;color:var(--text);outline:none
+    }
+    .row{display:flex;align-items:center;gap:10px}
+    .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px}
+    .btn{appearance:none;border:1px solid var(--line);background:#1e293b;color:var(--text);
+      border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:#0284c7}
+    .btn.danger{background:rgba(243,18,96,.12);border-color:rgba(243,18,96,.5)}
+    .muted{color:var(--muted)} .small{font-size:12px}
+    .preview{display:flex;gap:8px;flex-wrap:wrap}
+    .preview img{width:140px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+    .code{white-space:pre-wrap;font-family:ui-monospace,Consolas,Menlo,monospace;background:#0c1117;
+      border:1px solid var(--line);border-radius:10px;padding:12px;max-height:320px;overflow:auto}
+    .note{font-size:12px;color:#cbd5e1}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Đăng ký tài khoản</h1>
+    <p class="muted">Chọn vai trò để đăng ký. Quy định: <strong>không cho nâng cấp Student → PT</strong>. Nếu email/SĐT đã tồn tại cho tài khoản khác, sẽ từ chối.</p>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-student" onclick="switchTab('student')">Student</button>
+      <button class="tab" id="tab-pt" onclick="switchTab('pt')">PT</button>
+    </div>
+
+    <!-- STUDENT FORM -->
+    <form id="form-student" onsubmit="return submitStudent(event)">
+      <div class="card">
+        <h2>Thông tin tài khoản (Student)</h2>
+        <div class="grid-2">
+          <div><label>Họ tên</label><input id="st-name" required placeholder="VD: Nguyễn Văn A"></div>
+          <div><label>Số điện thoại</label><input id="st-phone" required pattern="^0[0-9]{9}$" placeholder="VD: 0901234567"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Email</label><input id="st-email" type="email" required placeholder="email@domain.com"></div>
+          <div><label>Mật khẩu</label><input id="st-pass" type="password" required minlength="6" placeholder="Tối thiểu 6 ký tự"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Nhập lại mật khẩu</label><input id="st-pass2" type="password" required minlength="6"></div>
+          <div class="row" style="margin-top:24px">
+            <span class="chip">Vai trò: STUDENT</span>
+          </div>
+        </div>
+        <p class="note">Sau khi gửi, hệ thống sẽ tạo <em>PendingRegistration</em> (TTL 3 phút) và gửi email xác nhận. Khi xác nhận, tạo User(role=student). </p>
+      </div>
+      <div class="row" style="justify-content:flex-end;gap:8px">
+        <button class="btn" type="button" onclick="fillStudentMock()">Điền nhanh</button>
+        <button class="btn primary" type="submit">Đăng ký Student</button>
+      </div>
+    </form>
+
+    <!-- PT FORM -->
+    <form id="form-pt" onsubmit="return submitPT(event)" style="display:none">
+      <div class="card">
+        <h2>Thông tin tài khoản (PT)</h2>
+        <div class="grid-2">
+          <div><label>Họ tên</label><input id="pt-name" required placeholder="VD: Trần Thị B"></div>
+          <div><label>Số điện thoại</label><input id="pt-phone" required pattern="^0[0-9]{9}$" placeholder="VD: 0909876543"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Email</label><input id="pt-email" type="email" required placeholder="email@domain.com"></div>
+          <div><label>Mật khẩu</label><input id="pt-pass" type="password" required minlength="6" placeholder="Tối thiểu 6 ký tự"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Nhập lại mật khẩu</label><input id="pt-pass2" type="password" required minlength="6"></div>
+          <div class="row" style="margin-top:24px">
+            <span class="chip">Vai trò: PT</span>
+          </div>
+        </div>
+        <p class="note">Rule: nếu email/SĐT đã tồn tại (dù đang là student) → <strong>không cho đăng ký PT</strong>.</p>
+      </div>
+
+      <div class="card">
+        <h2>Hồ sơ PT (sơ bộ để gửi duyệt)</h2>
+        <div class="grid-2">
+          <div><label>Primary Gym - Tên</label><input id="gym-name" placeholder="VD: Iron Gym Q1"></div>
+          <div><label>Primary Gym - Địa chỉ</label><input id="gym-address" placeholder="Địa chỉ chi tiết"></div>
+        </div>
+        <div class="grid-2">
+          <div><label>Toạ độ (lng)</label><input id="gym-lng" type="number" step="any" placeholder="106.70098"></div>
+          <div><label>Toạ độ (lat)</label><input id="gym-lat" type="number" step="any" placeholder="10.77689"></div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label>Kênh dạy (Delivery Modes)</label>
+            <div class="row">
+              <label class="row"><input type="checkbox" id="m-ptgym" checked> tại gym của PT</label>
+              <label class="row"><input type="checkbox" id="m-client"> tại nhà/gym học viên</label>
+              <label class="row"><input type="checkbox" id="m-other"> tại gym khác</label>
+            </div>
+          </div>
+          <div>
+            <label>Chính sách di chuyển (Travel Policy)</label>
+            <div class="grid-2">
+              <div><input id="tp-free" type="number" min="0" value="6" /><div class="small muted">freeRadiusKm</div></div>
+              <div><input id="tp-max" type="number" min="0" value="20"/><div class="small muted">maxTravelKm</div></div>
+            </div>
+            <div class="grid-2" style="margin-top:8px">
+              <div><input id="tp-fee" type="number" min="0" value="10000"/><div class="small muted">feePerKm (đ)</div></div>
+              <div class="row"><input type="checkbox" id="tp-enabled" checked><span class="small muted">enabled</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div><label>Kinh nghiệm (năm)</label><input id="pt-years" type="number" min="0" value="3"></div>
+          <div><label>Chuyên môn (phân tách bởi dấu phẩy)</label><input id="pt-specs" placeholder="giảm mỡ, tăng cơ"></div>
+        </div>
+
+        <div class="grid">
+          <div><label>Giới thiệu (bio)</label><textarea id="pt-bio" rows="4" placeholder="Giới thiệu ngắn về kinh nghiệm, phong cách huấn luyện..."></textarea></div>
+          <div><label>Video intro URL (tuỳ chọn)</label><input id="pt-video" placeholder="https://..."></div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <label>Ảnh phòng tập (1–3 ảnh)</label>
+            <input id="gym-photos" type="file" accept="image/*" multiple onchange="previewPhotos(event)">
+            <div class="preview" id="photos-preview"></div>
+            <div class="note">Backend thực tế sẽ upload lên CDN (Cloudinary/S3/Firebase) và nhận về URL để lưu vào <em>PTProfile.primaryGym.photos</em>.</div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <label>Chứng chỉ (dev-note: nhập nhanh dạng JSON)</label>
+          <textarea id="pt-certs" class="small" rows="3" placeholder='[{"name":"ACE CPT","issuer":"ACE","year":2020,"url":"https://..." }]'></textarea>
+        </div>
+
+        <p class="note">Sau khi đăng ký PT: tạo User(role=pt, isActive=true) → khởi tạo PTProfile(verified=false) + PTWallet(0đ). PT cập nhật hồ sơ và <strong>Gửi duyệt</strong> để admin approve/reject.</p>
+      </div>
+
+      <div class="row" style="justify-content:flex-end;gap:8px">
+        <button class="btn" type="button" onclick="fillPTMock()">Điền nhanh</button>
+        <button class="btn primary" type="submit">Đăng ký PT</button>
+      </div>
+    </form>
+
+    <div class="card">
+      <h3>Kết quả (mock payload gửi server)</h3>
+      <div id="out" class="code"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- Tabs ---
+    function switchTab(role){
+      document.getElementById('tab-student').classList.toggle('active', role==='student');
+      document.getElementById('tab-pt').classList.toggle('active', role==='pt');
+      document.getElementById('form-student').style.display = role==='student' ? '' : 'none';
+      document.getElementById('form-pt').style.display = role==='pt' ? '' : 'none';
+      document.getElementById('out').textContent = '';
+    }
+
+    // --- Mock duplicate check (demo) ---
+    const mockExisting = new Set(['0901234567','student@site.com']); // giả sử đã tồn tại
+    function isDuplicated(phone,email){
+      return mockExisting.has(phone) || mockExisting.has(email);
+    }
+
+    // --- Student submit ---
+    function submitStudent(e){
+      e.preventDefault();
+      const name = v('st-name'), phone = v('st-phone'), email = v('st-email');
+      const pass = v('st-pass'), pass2 = v('st-pass2');
+
+      if(pass !== pass2){ return alert('Mật khẩu không khớp'); }
+      if(isDuplicated(phone,email)){
+        return alert('Email/SĐT đã tồn tại — không thể đăng ký (rule demo).');
+      }
+
+      // payload giống /auth/registerByPhoneStart
+      const payload = { role:'student', phone, password: pass, name, email };
+      out(payload, 'POST /auth/register-by-phone/start → gửi email xác nhận (TTL 3 phút)');
+      return false;
+    }
+
+    // --- PT submit ---
+    let gymPhotoUrls = []; // mock objectURL preview → giả sử backend sẽ trả URL CDN
+    function submitPT(e){
+      e.preventDefault();
+      const name = v('pt-name'), phone = v('pt-phone'), email = v('pt-email');
+      const pass = v('pt-pass'), pass2 = v('pt-pass2');
+      if(pass !== pass2){ return alert('Mật khẩu không khớp'); }
+      // RULE: nếu đã tồn tại (kể cả student) → cấm đăng ký PT
+      if(isDuplicated(phone,email)){
+        return alert('Email/SĐT đã tồn tại cho tài khoản khác — KHÔNG hỗ trợ nâng cấp Student → PT.');
+      }
+
+      // Hồ sơ sơ bộ để snapshot khi gửi duyệt
+      let certificates = [];
+      const certRaw = document.getElementById('pt-certs').value.trim();
+      if(certRaw){ try { certificates = JSON.parse(certRaw); } catch(e){ alert('JSON chứng chỉ không hợp lệ'); return false; } }
+
+      const submittedProfile = {
+        primaryGym: {
+          name: v('gym-name'),
+          address: v('gym-address'),
+          location: { type:'Point', coordinates: [num('gym-lng'), num('gym-lat')] },
+          photos: gymPhotoUrls // thực tế sẽ là URL CDN
+        },
+        deliveryModes: {
+          atPtGym: id('m-ptgym').checked,
+          atClient: id('m-client').checked,
+          atOtherGym: id('m-other').checked
+        },
+        travelPolicy: {
+          enabled: id('tp-enabled').checked,
+          freeRadiusKm: num('tp-free'),
+          maxTravelKm: num('tp-max'),
+          feePerKm: num('tp-fee')
+        },
+        bio: v('pt-bio'),
+        specialties: v('pt-specs').split(',').map(s=>s.trim()).filter(Boolean),
+        yearsExperience: Number(v('pt-years')||0),
+        certificates,
+        videoIntroUrl: v('pt-video'),
+        areaNote: ''
+      };
+
+      const payload = {
+        role:'pt',
+        account: { phone, password: pass, name, email },
+        // (tuỳ backend) Bạn có thể chỉ gửi account ở bước /register-pt/start,
+        // còn submittedProfile sẽ được snapshot khi PT nhấn "Gửi duyệt" sau khi đăng nhập.
+        // Ở đây mình gửi kèm để bạn thấy đủ dữ liệu.
+        submittedProfile
+      };
+
+      out(payload, 'POST /auth/register-pt/start → gửi email xác nhận; sau confirm tạo User(role=pt) + PTProfile(verified=false) + PTWallet(0đ)');
+      return false;
+    }
+
+    // --- Preview photos (mock) ---
+    function previewPhotos(e){
+      const files = Array.from(e.target.files || []);
+      const box = id('photos-preview'); box.innerHTML = '';
+      gymPhotoUrls = [];
+      files.slice(0,3).forEach(f=>{
+        const url = URL.createObjectURL(f);
+        gymPhotoUrls.push(url);
+        const img = new Image(); img.src = url; box.appendChild(img);
+      });
+    }
+
+    // --- Helpers ---
+    const id = (x)=>document.getElementById(x);
+    const v = (x)=>id(x).value.trim();
+    const num = (x)=>Number(v(x)||0);
+    function out(data, note){
+      id('out').textContent = note + "\n\n" + JSON.stringify(data,null,2);
+    }
+
+    // --- Autofill buttons ---
+    function fillStudentMock(){
+      id('st-name').value = 'Nguyễn Văn Student';
+      id('st-phone').value = '0905555123';
+      id('st-email').value = 'new.student@site.com';
+      id('st-pass').value = 'secret12';
+      id('st-pass2').value = 'secret12';
+    }
+    function fillPTMock(){
+      id('pt-name').value = 'Trần Thị PT';
+      id('pt-phone').value = '0906666789';
+      id('pt-email').value = 'new.pt@site.com';
+      id('pt-pass').value = 'secret12';
+      id('pt-pass2').value = 'secret12';
+      id('gym-name').value = 'Iron Gym Q1';
+      id('gym-address').value = '12 Lê Lợi, Q.1, HCMC';
+      id('gym-lng').value = '106.70098';
+      id('gym-lat').value = '10.77689';
+      id('tp-free').value = '6';
+      id('tp-max').value = '20';
+      id('tp-fee').value = '10000';
+      id('pt-years').value = '5';
+      id('pt-specs').value = 'giảm mỡ, tăng cơ';
+      id('pt-bio').value = 'PT 5 năm kinh nghiệm, thế mạnh giảm mỡ và tăng cơ.';
+      id('pt-video').value = 'https://video.cdn/intro.mp4';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mock UI Đặt PT — có chọn địa điểm dạy & tính khoảng cách</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#101828; --muted:#8a93a6; --text:#e5e7eb; --brand:#6d5ef1; --brand-2:#22c55e;
+      --card:#0f172a; --border:#1f2a44; --warn:#f59e0b; --danger:#ef4444; --ok:#10b981;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, #1b2547 0%, transparent 60%), var(--bg);
+         font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Apple Color Emoji","Segoe UI Emoji"; color:var(--text)}
+    .container{max-width:1200px;margin:40px auto;padding:0 20px}
+    .grid{display:grid;grid-template-columns: 1.4fr 2fr;gap:24px}
+    @media (max-width: 1024px){.grid{grid-template-columns: 1fr}}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));border:1px solid var(--border);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .panel .hd{padding:18px 18px 0 18px}
+    .panel .bd{padding:16px 18px 20px 18px}
+
+    /* PT header */
+    .pt-card{padding:18px;display:flex;gap:16px;align-items:center}
+    .avatar{width:76px;height:76px;border-radius:50%;object-fit:cover;border:3px solid #0b1220;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+    .pt-meta .name{font-size:20px;font-weight:700}
+    .pt-meta .sub{color:var(--muted);font-size:14px;margin-top:2px}
+    .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;border-radius:999px;padding:4px 10px;border:1px solid var(--border);background:#111a33}
+    .badge.ok{border-color:#0b3e2f;background:#0f2e26;color:#a7f3d0}
+    .badge.warn{border-color:#3c3009;background:#2a220b;color:#fde68a}
+    .badge.danger{border-color:#3b0b0b;background:#2a0d0d;color:#fecaca}
+
+    /* Map */
+    .map{height:420px;border-top:1px dashed var(--border);background:
+      linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0/40px 40px,
+      #0b132b; border-bottom-left-radius:18px;border-bottom-right-radius:18px;position:relative;overflow:hidden}
+    .map .pin{position:absolute;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 4px rgba(255,255,255,.12);cursor:grab}
+    .map .pin:active{cursor:grabbing}
+    .map .pin.pt{background:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.25)}
+    .map .pin.student{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.25)}
+    .map .pin.other{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.25)}
+    .map .legend{position:absolute;right:10px;bottom:10px;background:rgba(16,24,40,.8);backdrop-filter:blur(6px);padding:8px 10px;border-radius:10px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
+    .route{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+
+    /* Form */
+    h2.sec{font-size:16px;margin:0 0 10px 0;letter-spacing:.2px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .field{flex:1;min-width:220px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    select, input[type="date"], input[type="number"], .chip, button{border-radius:12px;border:1px solid var(--border);background:#0d152a;color:var(--text)}
+    select, input[type="date"], input[type="number"]{width:100%;padding:12px 14px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;user-select:none}
+    .chip input{accent-color:var(--brand)}
+    .chip.active{outline:2px solid var(--brand);background:#141b36}
+    .times{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border:1px solid var(--border);cursor:pointer;user-select:none}
+    .btn:hover{border-color:#5063a8}
+    .btn.sel{background:#1b2141;border-color:#6e7dd6}
+    .btn.primary{background:linear-gradient(135deg, var(--brand), #8b5cf6);border-color:transparent;color:white}
+    .btn.success{background:linear-gradient(135deg, var(--brand-2), #16a34a);border-color:transparent;color:white}
+    .btn.ghost{background:#0d152a}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .hint{font-size:12px;color:var(--muted)}
+    .divider{height:1px;background:linear-gradient(90deg, transparent, var(--border), transparent);margin:14px 0}
+
+    /* Preview */
+    .preview{display:grid;grid-template-columns: repeat(1, minmax(0,1fr));gap:10px}
+    @media(min-width:720px){.preview{grid-template-columns: repeat(2, minmax(0,1fr))}}
+    @media(min-width:1024px){.preview{grid-template-columns: repeat(3, minmax(0,1fr))}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+    .card .date{font-size:12px;color:var(--muted)}
+    .card .time{font-weight:700;margin-top:6px}
+    .empty{padding:16px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="grid">
+      <!-- LEFT: PT summary + Map -->
+      <section class="panel">
+        <div class="pt-card">
+          <img class="avatar" src="https://images.unsplash.com/photo-1594385207467-6d283f8f8a5f?q=80&w=400&auto=format&fit=crop" alt="PT"/>
+          <div class="pt-meta">
+            <div class="name">Nguyễn Minh PT</div>
+            <div class="sub">Certified • 4.9 ★ (128)</div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+              <span class="badge ok">Đã xác minh</span>
+              <span class="badge" id="distance-badge">Khoảng cách: —</span>
+              <span class="badge" id="policy-badge">Chính sách di chuyển: —</span>
+            </div>
+          </div>
+        </div>
+        <div class="map" id="map">
+          <svg class="route" id="route" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+          <div class="pin pt" id="pt-pin" title="PT Gym"></div>
+          <div class="pin student" id="student-pin" title="Bạn"></div>
+          <div class="pin other" id="other-pin" title="Gym khác" style="display:none"></div>
+          <div class="legend">Bản đồ minh họa (mock)
+            <div style="margin-top:4px">Xanh: PT • Đỏ: Bạn • Lục: Gym khác</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Booking wizard -->
+      <section class="panel">
+        <div class="hd"><h2 class="sec">Đặt lịch với PT</h2></div>
+        <div class="bd">
+          <!-- Step 0: Delivery mode (supports) -->
+          <div class="row">
+            <div class="field" style="flex:1 1 100%">
+              <label>Địa điểm dạy</label>
+              <div class="chips" id="modes">
+                <label class="chip"><input type="radio" name="m" value="atPtGym"> <span>Tại gym của PT</span></label>
+                <label class="chip"><input type="radio" name="m" value="atClient"> <span>Tại nhà tôi</span></label>
+                <label class="chip"><input type="radio" name="m" value="atOtherGym"> <span>Tại gym khác</span></label>
+              </div>
+              <div class="hint">Mode khả dụng dựa vào supports của package / deliveryModes của PT.</div>
+            </div>
+          </div>
+
+          <!-- Locations input -->
+          <div class="row" id="loc-row" style="margin-top:8px">
+            <div class="field">
+              <label>Vị trí của tôi (lat, lng)</label>
+              <div style="display:flex;gap:8px">
+                <input type="number" id="my-lat" step="0.0001" placeholder="10.77" value="10.7718" />
+                <input type="number" id="my-lng" step="0.0001" placeholder="106.70" value="106.6983" />
+              </div>
+              <div class="hint">Dùng thử toạ độ trung tâm TP.HCM.</div>
+            </div>
+            <div class="field" id="othergym-field" style="display:none">
+              <label>Gym khác (lat, lng)</label>
+              <div style="display:flex;gap:8px">
+                <input type="number" id="other-lat" step="0.0001" placeholder="10.78" value="10.7870" />
+                <input type="number" id="other-lng" step="0.0001" placeholder="106.69" value="106.6900" />
+              </div>
+              <div class="hint">Chỉ dùng khi chọn “Tại gym khác”.</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Step 1: Package -->
+          <div class="row">
+            <div class="field">
+              <label>Gói huấn luyện</label>
+              <select id="pkg">
+                <option value="fatloss">Gói Giảm mỡ 1 tháng — 9 buổi (60')</option>
+              </select>
+              <div class="hint" id="pkg-hint">Chọn gói trước khi xem lịch.</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Step 2: Pattern + fixed slot -->
+          <div class="row">
+            <div class="field" style="flex:1 1 100%">
+              <label>Pattern (thứ)</label>
+              <div class="chips" id="pattern">
+                <label class="chip"><input type="radio" name="p" value="1-3-5"> <span>T2 • T4 • T6</span></label>
+                <label class="chip"><input type="radio" name="p" value="2-4-6"> <span>T3 • T5 • T7</span></label>
+              </div>
+            </div>
+            <div class="field" style="flex:1 1 100%">
+              <label>Ca làm việc</label>
+              <div class="times" id="time-window">
+                <button class="btn ghost" data-window="morning">Sáng 07:00–11:00</button>
+                <button class="btn ghost" data-window="afternoon">Chiều 13:00–17:00</button>
+              </div>
+              <div class="hint">Chọn ca trước, sau đó chọn khung giờ cố định bên dưới.</div>
+            </div>
+          </div>
+
+          <div class="row" id="blocks-row" style="margin-top:10px;display:none">
+            <div class="field" style="flex:1 1 100%">
+              <label>Khung giờ cố định</label>
+              <div class="times" id="blocks"></div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Step 3: Start date suggestions -->
+          <div class="row">
+            <div class="field" style="flex:1 1 100%">
+              <label>Ngày bắt đầu</label>
+              <div class="times" id="start-suggestions"></div>
+              <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                <input type="date" id="start-date" />
+                <button class="btn" id="use-date">Dùng ngày này</button>
+                <span class="hint">Hoặc chọn một trong các gợi ý.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Preview plan (9 sessions) -->
+          <div class="row" style="align-items:center;justify-content:space-between">
+            <h2 class="sec" style="margin:0">Preview 9 buổi</h2>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span class="badge" id="range-badge">Phạm vi: —</span>
+              <button class="btn primary" id="preview" disabled>Hiển thị preview</button>
+            </div>
+          </div>
+          <div id="preview-grid" style="margin-top:12px"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ===== Mock Data =====
+    const PKGS = {
+      fatloss: { name: 'Gói Giảm mỡ 1 tháng', totalSessions: 9, durationMin: 60, supports: { atPtGym:true, atClient:true, atOtherGym:true } }
+    }
+    const PT_GYM = { lat: 10.7800, lng: 106.6995 } // toạ độ giả định (Q1)
+    const WORKING = {
+      1: [{start:'07:00',end:'11:00'},{start:'13:00',end:'17:00'}],
+      2: [{start:'07:00',end:'11:00'},{start:'13:00',end:'17:00'}],
+      3: [{start:'07:00',end:'11:00'},{start:'13:00',end:'17:00'}],
+      4: [{start:'07:00',end:'11:00'},{start:'13:00',end:'17:00'}],
+      5: [{start:'07:00',end:'11:00'},{start:'13:00',end:'17:00'}],
+      6: [{start:'07:00',end:'11:00'}],
+    }
+    const TRAVEL_POLICY = { enabled:true, freeRadiusKm:6, maxTravelKm:20, feePerKm:10000 }
+    const MORNING_BLOCKS = ['07:00-08:00','08:30-09:30','10:00-11:00']
+    const AFTERNOON_BLOCKS = ['13:00-14:00','14:30-15:30','16:00-17:00']
+
+    const BUSY_PT = []
+    const BUSY_STUDENT = []
+
+    // ===== Helpers =====
+    const $ = (sel) => document.querySelector(sel)
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel))
+    const fmtDate = (d) => d.toLocaleDateString('vi-VN', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'})
+    const toMin = (hhmm) => {const [h,m]=hhmm.split(':').map(Number);return h*60+m}
+    const setTimeOn = (date, hhmm) => {const d=new Date(date);const [h,m]=hhmm.split(':').map(Number);d.setHours(h,m,0,0);return d}
+    const haversineKm = (a,b)=>{ const R=6371; const toRad=x=>x*Math.PI/180; const dLat=toRad(b.lat-a.lat); const dLng=toRad(b.lng-a.lng); const la1=toRad(a.lat); const la2=toRad(b.lat); const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2; return R*2*Math.asin(Math.sqrt(h)) }
+
+    function nextThreeStarts(patternDows){
+      const today = new Date(); today.setHours(0,0,0,0)
+      const out = []
+      let cursor = new Date(today); cursor.setDate(cursor.getDate()+1)
+      while(out.length<3){ if(patternDows.includes(cursor.getDay())) out.push(new Date(cursor)); cursor.setDate(cursor.getDate()+1) }
+      return out
+    }
+    function withinWorking(day, slot){ const itvs = WORKING[day] || []; const [s,e] = slot.split('-'); const sMin = toMin(s), eMin = toMin(e); return itvs.some(w => sMin >= toMin(w.start) && eMin <= toMin(w.end)) }
+
+    // ===== Map helpers (very rough projection for demo) =====
+    const MAP_REGION = { minLat:10.70, maxLat:10.82, minLng:106.64, maxLng:106.75 }
+    const map = $('#map'), routeSvg = $('#route'), ptPin = $('#pt-pin'), stuPin = $('#student-pin'), otherPin = $('#other-pin')
+    function project({lat,lng}){
+      const x = (lng - MAP_REGION.minLng) / (MAP_REGION.maxLng - MAP_REGION.minLng)
+      const y = 1 - (lat - MAP_REGION.minLat) / (MAP_REGION.maxLat - MAP_REGION.minLat)
+      return { x: Math.max(0,Math.min(1,x)), y: Math.max(0,Math.min(1,y)) }
+    }
+    function placePin(el, coord){ const p = project(coord); el.style.left = (p.x*100)+'%'; el.style.top = (p.y*100)+'%' }
+    function drawRoute(a,b){ const A=project(a), B=project(b); routeSvg.innerHTML = `<line x1="${A.x*100}" y1="${A.y*100}" x2="${B.x*100}" y2="${B.y*100}" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="3 2" />` }
+
+    // ===== State =====
+    const state = { pkg:'fatloss', pattern:null, window:null, slot:null, start:null, mode:null, my:{lat:10.7718,lng:106.6983}, other:{lat:10.787, lng:106.690} }
+
+    // ===== UI elements =====
+    const pkgSel=$('#pkg'), patternBox=$('#pattern'), tw=$('#time-window'), blocksRow=$('#blocks-row'), blocks=$('#blocks')
+    const startSugs=$('#start-suggestions'), startDate=$('#start-date'), btnUseDate=$('#use-date'), btnPreview=$('#preview')
+    const grid=$('#preview-grid'), rangeBadge=$('#range-badge'), distanceBadge=$('#distance-badge'), policyBadge=$('#policy-badge')
+    const modesBox=$('#modes'), myLat=$('#my-lat'), myLng=$('#my-lng'), otherLat=$('#other-lat'), otherLng=$('#other-lng'), otherField=$('#othergym-field')
+
+    // ===== Initial map pins =====
+    placePin(ptPin, PT_GYM); placePin(stuPin, state.my); placePin(otherPin, state.other); drawRoute(state.my, PT_GYM)
+
+    function renderBlocks(){
+      blocks.innerHTML=''
+      const list = state.window==='morning' ? MORNING_BLOCKS : state.window==='afternoon' ? AFTERNOON_BLOCKS : []
+      list.forEach(b=>{
+        const el = document.createElement('button'); el.className = 'btn ghost'; el.textContent = b; el.dataset.block=b
+        el.onclick=()=>{ $$('#blocks .btn').forEach(x=>x.classList.remove('sel')); el.classList.add('sel'); state.slot=b; computeStartSuggestions(); checkReady() }
+        blocks.appendChild(el)
+      })
+      blocksRow.style.display = list.length? 'flex':'none'
+    }
+
+    function computeStartSuggestions(){ startSugs.innerHTML=''; if(!state.pattern || !state.slot) return; const dows = state.pattern.split('-').map(Number); const sugs = nextThreeStarts(dows); sugs.forEach(d=>{ const b = document.createElement('button'); b.className='btn'; b.textContent = fmtDate(d); b.onclick=()=>{ state.start = d; startDate.value = d.toISOString().slice(0,10); highlightSug(b); checkReady() }; startSugs.appendChild(b) }) }
+    function highlightSug(active){ $$('#start-suggestions .btn').forEach(x=>x.classList.remove('sel')); active?.classList.add('sel') }
+
+    function computeDistanceAndPolicy(){
+      let origin=null, dest=null
+      if(state.mode==='atPtGym'){ origin = state.my; dest = PT_GYM }
+      if(state.mode==='atClient'){ origin = PT_GYM; dest = state.my }
+      if(state.mode==='atOtherGym'){ origin = PT_GYM; dest = state.other }
+      if(!origin||!dest){ distanceBadge.textContent='Khoảng cách: —'; policyBadge.textContent='Chính sách di chuyển: —'; rangeBadge.textContent='Phạm vi: —'; routeSvg.innerHTML=''; return {distanceKm:0, ok:true}}
+      const distanceKm = Math.round(haversineKm(origin, dest)*100)/100
+      drawRoute(origin, dest)
+      distanceBadge.textContent = `Khoảng cách: ${distanceKm} km`
+      if(state.mode==='atPtGym'){ policyBadge.textContent = 'Chính sách di chuyển: không áp dụng'; rangeBadge.textContent='Phạm vi: ✔'; return {distanceKm, ok:true} }
+      // di chuyển: kiểm tra maxTravelKm
+      if(TRAVEL_POLICY.enabled){
+        policyBadge.textContent = `Chính sách: free ${TRAVEL_POLICY.freeRadiusKm} km • tối đa ${TRAVEL_POLICY.maxTravelKm} km`
+        const ok = distanceKm <= TRAVEL_POLICY.maxTravelKm
+        rangeBadge.textContent = ok ? 'Phạm vi: ✔' : 'Phạm vi: ✖ quá xa'
+        return {distanceKm, ok}
+      } else {
+        policyBadge.textContent = 'PT không nhận dạy di chuyển'
+        rangeBadge.textContent = 'Phạm vi: ✖'
+        return {distanceKm, ok:false}
+      }
+    }
+
+    function checkReady(){
+      const basicsOk = !!(state.pkg && state.pattern && state.slot && state.start && state.mode)
+      const { ok } = computeDistanceAndPolicy()
+      btnPreview.disabled = !(basicsOk && ok)
+    }
+
+    function previewPlan({pattern, slot, startDate, totalSessions}){
+      const dows = pattern.split('-').map(Number)
+      const [sStr,eStr] = slot.split('-')
+      const result = []
+      let guard=0
+      let cursor = new Date(startDate); cursor.setHours(0,0,0,0)
+      while(result.length<totalSessions && guard<500){
+        guard++
+        while(!dows.includes(cursor.getDay())) cursor.setDate(cursor.getDate()+1)
+        const dow = cursor.getDay()
+        const itvs = WORKING[dow] || []
+        const ok = itvs.some(w => toMin(sStr) >= toMin(w.start) && toMin(eStr) <= toMin(w.end))
+        if(ok){
+          const st = setTimeOn(cursor, sStr)
+          const en = setTimeOn(cursor, eStr)
+          const ptBusy = BUSY_PT.some(x => new Date(x).getTime()===st.getTime())
+          const stdBusy = BUSY_STUDENT.some(x => new Date(x).getTime()===st.getTime())
+          if(!ptBusy && !stdBusy && st>new Date()) result.push({ date: new Date(cursor), start: st, end: en, label: slot })
+        }
+        cursor.setDate(cursor.getDate()+1)
+      }
+      return result.slice(0,totalSessions)
+    }
+
+    function renderPreview(items){
+      const grid = $('#preview-grid')
+      if(!items.length){ grid.innerHTML = '<div class="empty">Không có khung giờ phù hợp. Hãy đổi ngày bắt đầu / pattern.</div>'; return }
+      const head = `<div class="hint">Hiển thị ${items.length} buổi cố định theo khung <b>${state.slot}</b> — bắt đầu từ <b>${fmtDate(state.start)}</b></div>`
+      const list = items.map((it,idx)=>`<div class="card"><div class="date">#${idx+1} • ${fmtDate(it.date)}</div><div class="time">${it.label}</div></div>`).join('')
+      grid.innerHTML = head + '<div class="preview" style="margin-top:10px">'+list+'</div>'
+    }
+
+    // ===== Wiring =====
+    pkgSel.onchange = () => { state.pkg = pkgSel.value; checkReady() }
+
+    modesBox.addEventListener('change', (e)=>{
+      if(e.target && e.target.name==='m'){
+        $$('#modes .chip').forEach(c=>c.classList.remove('active'))
+        e.target.closest('.chip').classList.add('active')
+        state.mode = e.target.value
+        otherField.style.display = state.mode==='atOtherGym' ? 'block':'none'
+        // Route lines & badges
+        computeDistanceAndPolicy(); checkReady()
+      }
+    })
+
+    // location inputs
+    function updateMy(){ state.my = { lat: parseFloat(myLat.value), lng: parseFloat(myLng.value) }; placePin(stuPin,state.my); computeDistanceAndPolicy(); }
+    function updateOther(){ state.other = { lat: parseFloat(otherLat.value), lng: parseFloat(otherLng.value) }; placePin(otherPin,state.other); computeDistanceAndPolicy(); }
+    myLat.oninput = myLng.oninput = updateMy
+    otherLat.oninput = otherLng.oninput = updateOther
+
+    // pattern + time window
+    patternBox.addEventListener('change', (e)=>{ if(e.target && e.target.name==='p'){ $$('#pattern .chip').forEach(c=>c.classList.remove('active')); e.target.closest('.chip').classList.add('active'); state.pattern=e.target.value; computeStartSuggestions(); checkReady() } })
+    tw.addEventListener('click', (e)=>{ const w=e.target?.dataset?.window; if(!w) return; $$('#time-window .btn').forEach(x=>x.classList.remove('sel')); e.target.classList.add('sel'); state.window=w; state.slot=null; renderBlocks(); computeStartSuggestions(); checkReady() })
+
+    // start date
+    btnUseDate.onclick = () => { if(startDate.value){ state.start = new Date(startDate.value+'T00:00:00'); highlightSug(null); checkReady() } }
+
+    // preview
+    btnPreview.onclick = () => { const total = PKGS[state.pkg].totalSessions || 9; const items = previewPlan({ pattern: state.pattern, slot: state.slot, startDate: state.start, totalSessions: total }); renderPreview(items) }
+
+    // initial badges
+    policyBadge.textContent = TRAVEL_POLICY.enabled ? `Chính sách: free ${TRAVEL_POLICY.freeRadiusKm} km • tối đa ${TRAVEL_POLICY.maxTravelKm} km` : 'PT không nhận dạy di chuyển'
+    computeDistanceAndPolicy()
+  </script>
+</body>
+</html>

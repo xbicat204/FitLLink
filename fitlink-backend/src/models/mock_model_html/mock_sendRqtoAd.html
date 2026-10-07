@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PT Profile – Mock</title>
+<style>
+  :root{
+    --bg:#0b0e12; --panel:#121821; --muted:#8a95a7; --text:#e8eef7;
+    --line:#1f2a37; --accent:#ff6a2b; --accent-2:#ff844f;
+    --ok:#1fb980; --warn:#e0b03b; --bad:#ef5350;
+    --chip:#182130;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:linear-gradient(120deg,#0b0e12,#0e131a);
+    color:var(--text); font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:24px}
+  .topbar{
+    position:sticky; top:0; z-index:10; margin:-24px -24px 16px;
+    padding:16px 24px; border-bottom:1px solid var(--line);
+    background:#0f141bba; backdrop-filter:blur(8px)
+  }
+  .row{display:flex; gap:20px}
+  .col{flex:1}
+  .col-2{flex:2}
+  .panel{
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:var(--radius); padding:16px;
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  h1{font-size:18px;margin:0 0 4px}
+  h2{font-size:13px;letter-spacing:.02em;color:#cfd6e3;margin:0 0 10px}
+  .muted{color:var(--muted)}
+  .grid{display:grid; gap:12px}
+  .g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  label.block{display:block}
+  .lbl{margin:0 0 6px; font-size:12px; color:#cfd6e3}
+  input[type="text"],input[type="number"],textarea{
+    width:100%; padding:10px 12px; border-radius:10px;
+    background:#0b1016; border:1px solid var(--line); color:var(--text);
+    outline:none; transition:.15s border;
+  }
+  textarea{resize:vertical; min-height:84px}
+  input:focus,textarea:focus{border-color:#2b3b52}
+  .tog{display:inline-flex;align-items:center;gap:8px;margin-right:14px}
+  .tog input{width:16px;height:16px;accent-color:var(--accent)}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:10px 14px; border-radius:10px; border:1px solid transparent;
+    background:var(--accent); color:#fff; font-weight:600; cursor:pointer;
+    transition:.15s background;
+  }
+  .btn:hover{background:var(--accent-2)}
+  .btn.outline{background:transparent;border-color:var(--line);color:#d7deea}
+  .btn[disabled]{opacity:.6; cursor:not-allowed}
+  .stack{display:flex;gap:10px;flex-wrap:wrap}
+  .banner{
+    margin-bottom:16px; padding:14px; border-radius:var(--radius);
+    border:1px solid #3b2f12; background:#251d0d; color:#ffe9b6;
+  }
+  .banner.ok{border-color:#154c3c;background:#0f2f27;color:#c5f3e5}
+  .banner.bad{border-color:#4c1919;background:#2a1212;color:#ffd6d6}
+  .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--chip);color:#c9d3e6;font-size:12px}
+  .preview-head{display:flex;gap:12px}
+  .avatar{width:64px;height:64px;border-radius:12px;object-fit:cover;background:#0b1016;border:1px solid var(--line)}
+  .rows{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin-top:10px}
+  .rowk{color:#a9b5c7;font-size:12px}
+  .rowv{color:#e6edf7}
+  .divider{height:1px;background:var(--line);margin:12px 0}
+  /* responsive */
+  @media (max-width:960px){
+    .row{flex-direction:column}
+    .col-2{flex:auto}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <h1>PT Profile</h1>
+          <div class="muted">Complete your profile and submit for admin approval.</div>
+        </div>
+        <div class="stack">
+          <button class="btn outline">Save draft</button>
+          <button class="btn">Submit for review</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status banner (change class: banner / banner ok / banner bad) -->
+    <div class="banner">Draft — complete the required fields then submit for review.</div>
+    <!-- <div class="banner ok">✅ Approved. Your profile is live.</div> -->
+    <!-- <div class="banner">⏳ Waiting for admin review. You’ll be notified once approved.</div> -->
+    <!-- <div class="banner bad">❌ Rejected: please add gym photo and coordinates.</div> -->
+
+    <div class="row">
+      <!-- Left form -->
+      <div class="col col-2 grid" style="gap:16px">
+        <section class="panel">
+          <h2>Basic info</h2>
+          <div class="grid g-3">
+            <label class="block">
+              <div class="lbl">Full name</div>
+              <input type="text" placeholder="Nguyen Van A" />
+            </label>
+            <label class="block">
+              <div class="lbl">Years of experience</div>
+              <input type="number" placeholder="0" />
+            </label>
+            <label class="block">
+              <div class="lbl">Avatar URL</div>
+              <input type="text" placeholder="https://..." />
+            </label>
+          </div>
+          <label class="block" style="margin-top:10px">
+            <div class="lbl">Short bio</div>
+            <textarea placeholder="A short introduction about you…"></textarea>
+          </label>
+          <div class="grid g-2" style="margin-top:10px">
+            <label class="block">
+              <div class="lbl">Specialties (comma separated)</div>
+              <input type="text" placeholder="fat loss, hypertrophy" />
+            </label>
+            <label class="block">
+              <div class="lbl">Certifications (comma separated)</div>
+              <input type="text" placeholder="ACE, NASM" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Primary gym</h2>
+          <div class="grid g-2">
+            <label class="block">
+              <div class="lbl">Gym name</div>
+              <input type="text" placeholder="Iron Gym…" />
+            </label>
+            <label class="block">
+              <div class="lbl">Gym address</div>
+              <input type="text" placeholder="123 Street, District…" />
+            </label>
+          </div>
+          <div class="grid g-3" style="margin-top:10px">
+            <label class="block">
+              <div class="lbl">Longitude (lng)</div>
+              <input type="text" placeholder="106.8…" />
+            </label>
+            <label class="block">
+              <div class="lbl">Latitude (lat)</div>
+              <input type="text" placeholder="10.7…" />
+            </label>
+            <label class="block">
+              <div class="lbl">Gym photo URL</div>
+              <input type="text" placeholder="https://..." />
+            </label>
+          </div>
+          <div class="muted" style="margin-top:8px;font-size:12px">
+            Coordinates required if you teach at client’s home or other gyms (for distance & travel fees).
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Delivery & travel policy</h2>
+          <div class="stack" style="margin-bottom:8px">
+            <label class="tog"><input type="checkbox" checked /> At PT gym</label>
+            <label class="tog"><input type="checkbox" /> At client’s home</label>
+            <label class="tog"><input type="checkbox" /> At other gym</label>
+          </div>
+          <div class="grid g-3">
+            <label class="block">
+              <div class="lbl">Free radius (km)</div>
+              <input type="number" placeholder="3" />
+            </label>
+            <label class="block">
+              <div class="lbl">Fee per km</div>
+              <input type="number" placeholder="10000" />
+            </label>
+            <label class="block">
+              <div class="lbl">Max travel (km)</div>
+              <input type="number" placeholder="12" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Media & documents</h2>
+          <div class="grid g-2">
+            <label class="block">
+              <div class="lbl">Intro video URL (optional)</div>
+              <input type="text" placeholder="https://youtu.be/…" />
+            </label>
+            <label class="block">
+              <div class="lbl">Sample document URL (optional)</div>
+              <input type="text" placeholder="https://…" />
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right preview -->
+      <div class="col grid" style="gap:16px">
+        <section class="panel">
+          <h2>Public profile preview</h2>
+          <div class="preview-head">
+            <img class="avatar" src="https://placehold.co/80x80?text=PT" alt="">
+            <div>
+              <div style="font-weight:700">Your name</div>
+              <div class="muted" style="font-size:12px">Years of experience</div>
+              <div style="margin-top:8px">
+                <span class="chip">PT gym</span>
+                <span class="chip">Client home</span>
+              </div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="rows">
+            <div class="rowk">Gym</div><div class="rowv">—</div>
+            <div class="rowk">Address</div><div class="rowv">—</div>
+            <div class="rowk">Travel</div><div class="rowv">Free 3km · 10k/km · Max 12km</div>
+          </div>
+          <div class="divider"></div>
+          <div class="muted">Short bio preview appears here. It will be truncated after a few lines in public pages.</div>
+        </section>
+
+        <section class="panel">
+          <h2>Submit checklist</h2>
+          <ul class="muted" style="line-height:1.8">
+            <li>• Full name & bio</li>
+            <li>• Primary gym name</li>
+            <li>• Coordinates if teaching at client/other gym</li>
+            <li>• (Optional) video & documents</li>
+          </ul>
+          <div class="divider"></div>
+          <button class="btn" style="width:100%">Submit for review</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Dependencies and generated output
+**/node_modules/
+**/coverage/
+**/dist/
+**/build/
+**/uploads/
+
+# Local secrets and environment files
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/jwt.http
+
+# Local/editor files
+**/.DS_Store
+**/.vscode/*
+!**/.vscode/extensions.json

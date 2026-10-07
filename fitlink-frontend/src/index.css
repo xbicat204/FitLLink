@@ -1,0 +1,226 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+:root {
+  --font-sans: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Avenir Next", sans-serif;
+  --bg-canvas: #f5efe7;
+  --bg-canvas-deep: #eadfce;
+  --bg-surface: rgba(255, 250, 244, 0.8);
+  --bg-surface-strong: rgba(255, 255, 255, 0.92);
+  --ink-strong: #1f2933;
+  --ink: #334155;
+  --ink-soft: #64748b;
+  --line-soft: rgba(148, 163, 184, 0.22);
+  --accent: #d97706;
+  --accent-strong: #b45309;
+  color: var(--ink-strong);
+  background: var(--bg-canvas);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(251, 191, 36, 0.22), transparent 28%),
+    radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 24%),
+    linear-gradient(180deg, #fbf6ef 0%, #f3ebdf 48%, #f8f3ec 100%);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.45;
+}
+
+body::before {
+  top: 96px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background: rgba(251, 191, 36, 0.38);
+}
+
+body::after {
+  left: -120px;
+  bottom: 64px;
+  width: 340px;
+  height: 340px;
+  background: rgba(251, 146, 60, 0.24);
+}
+
+#root {
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+  color: var(--ink-strong);
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+}
+
+p,
+span,
+li,
+a,
+button,
+input,
+textarea,
+select,
+label {
+  letter-spacing: -0.015em;
+}
+
+a,
+button,
+input,
+textarea,
+select {
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(217, 119, 6, 0.35);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(249, 115, 22, 0.2);
+  color: #111827;
+}
+
+.brand-shell {
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 248, 0.94) 0%,
+    rgba(251, 245, 237, 0.82) 100%
+  );
+  box-shadow:
+    0 18px 60px rgba(120, 74, 30, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(18px);
+}
+
+.soft-panel {
+  border: 1px solid var(--line-soft);
+  background: var(--bg-surface);
+  box-shadow: 0 20px 50px rgba(148, 117, 88, 0.08);
+}
+
+.grain-overlay {
+  position: relative;
+}
+
+.grain-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mix-blend-mode: soft-light;
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.content-scroll,
+main {
+  scrollbar-width: thin;
+  scrollbar-color: #6b7280 #111827;
+  /* thumb | track (gray-500 | gray-900) */
+}
+
+.content-scroll::-webkit-scrollbar,
+main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-scroll::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.6);
+}
+
+.content-scroll::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.6);
+  border-radius: 9999px;
+}
+
+/* Xóa sạch mọi pseudo-element trong trang admin */
+.admin-wrapper *::before,
+.admin-wrapper *::after {
+  content: none !important;
+  background: none !important;
+  border: none !important;
+  display: none !important;
+}
+
+@keyframes card-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-fade-up {
+  animation: card-fade-up 0.35s ease-out forwards;
+}

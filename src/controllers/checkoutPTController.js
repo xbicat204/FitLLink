@@ -7,6 +7,7 @@ import StudentPackage from '~/models/StudentPackage'
 import PTWallet from '~/models/PTWallet'
 import PTWalletTransaction from '~/models/PTWalletTransaction'
 import { calcBookingPricing } from '~/utils/pricingUtils'
+import { calculatePaymentSplit } from '~/utils/paymentUtils'
 import Booking from '~/models/Booking'
 import StudentProfile from '~/models/StudentProfile'
 import { createSlotsAndSessionsForBooking } from '~/services/booking/generateFromBooking'
@@ -382,8 +383,7 @@ const confirmPayment = async (req, res) => {
 
         // Tính fee
         const platformPercent = Number(env.PLATFORM_FEE_PERCENT ?? 20);
-        const platformFee = Math.floor(trans.amount * platformPercent / 100);
-        const ptEarning = trans.amount - platformFee;
+        const { platformFee, ptEarning } = calculatePaymentSplit(trans.amount, platformPercent);
 
         // Cập nhật transaction
         const gatewayTxnId = info?.transactions?.[0]?.transactionId;

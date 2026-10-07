@@ -1,24 +1,20 @@
 // utils/scheduleFromBooking.js
 const addMinutes = (d, m) => new Date(d.getTime() + m * 60000);
 
-// Gen đúng từ startDate (Date object), giữ nhịp theo pattern (0..6, 0=CN)
+// Generate dates from startDate in calendar order for pattern weekdays (0..6, 0=Sunday).
 function generateDatesByPatternFromDate(startDate, pattern, total) {
   const start = new Date(startDate);
-  start.setHours(0,0,0,0);
+  start.setHours(0, 0, 0, 0);
 
-  const days = [...new Set(pattern)].sort((a,b)=>a-b); // 0..6
+  const days = new Set(pattern);
   const out = [];
-  let cursor = new Date(start);
+  const cursor = new Date(start);
+
+  if (days.size === 0 || total <= 0) return out;
 
   while (out.length < total) {
-    for (const dow of days) {
-      const diff = (dow - cursor.getDay() + 7) % 7;
-      const next = new Date(cursor);
-      next.setDate(cursor.getDate() + diff);
-      if (next >= start) out.push(new Date(next));
-      if (out.length >= total) break;
-    }
-    cursor.setDate(cursor.getDate() + 7);
+    if (days.has(cursor.getDay())) out.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
   }
   return out;
 }
